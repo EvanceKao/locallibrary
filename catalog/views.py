@@ -2,7 +2,8 @@ from django.shortcuts import render
 from .models import Book, Author, BookInstance, Genre
 from django.views import generic
 from django.shortcuts import get_object_or_404
-
+from django.contrib.auth.decorators import login_required   # Part 8
+from django.contrib.auth.mixins import LoginRequiredMixin   # Part 8
 # Create your views here.
 
 def index(request):
@@ -77,3 +78,31 @@ class BookDetailView(generic.DetailView):
     #     # book = get_object_or_404(Book, pk=primary_key)
     #
     #     return render(request, 'catalog/book_detail.html', context={'book': book})
+
+# Part 8: 可以透過裝飾器 @login_required 確保該 view function 需要登入後才能訪問
+# https://docs.djangoproject.com/en/2.0/topics/auth/default/#limiting-access-to-logged-in-users
+@login_required
+def my_view_login_required(request):
+    context = {
+        'num_books': 0,
+        'num_instances': 0,
+        'num_instances_available': 0,
+        'num_authors': 0,
+        'num_visits': 0,
+    }
+    return render(request, 'index.html', context=context)
+
+# Part 8: 以 LoginRequiredMixin 限制 user login 後才能訪問 view class
+class MyViewLoginRequired(LoginRequiredMixin, generic.ListView):
+    login_url = '/login/'
+    redirect_field_name = 'redirect_to'
+
+# Part 8
+class LoanedBooksByUserListView(LoginRequiredMixin, generic.ListView):
+    """Generic class-based view listing books on loan to current user."""
+    model = BookInstance
+    template_name = 'catalog/bookinstance_list_borrowed_user.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')

@@ -1,6 +1,8 @@
 from django.db import models
-from django.urls import reverse  # To generate URLS by reversing URL patterns
-import uuid # Required for unique book instances
+from django.urls import reverse                 # To generate URLS by reversing URL patterns
+import uuid                                     # Required for unique book instances
+from django.contrib.auth.models import User     # Part 8
+from datetime import date                       # Part 8
 
 # Create your models here.
 class MyModelName(models.Model):
@@ -86,6 +88,7 @@ class BookInstance(models.Model):
     imprint = models.CharField(max_length=200)
     # DateField 會被用來設定 due_back 的日期(紀錄書本何時會被歸還，可再被使用，或者是否正在保養期)，這個字段允許 blank 或 null 值，而當元數據模型 (Class Meta)收到請求(query)時也會使用此字段來做資料排序。
     due_back = models.DateField(null=True, blank=True)
+    borrower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     LOAN_STATUS = (
         ('m', 'Maintenance'),
@@ -105,6 +108,7 @@ class BookInstance(models.Model):
 
     class Meta:
         ordering = ['due_back']
+        permissions = (("can_mark_returned", "Set book as returned"),)
 
     # 而 __str__() 模型用來表示 BookInstance 這個物件的「唯一 ID」和「相關之 Book 書本名稱(title)」的組合。
     def __str__(self):
@@ -113,6 +117,12 @@ class BookInstance(models.Model):
         return f'{self.id} ({self.book.title})'
         # 在舊版 Python 這部分的教學中，我們則使用了另一種有效的 formatted string 語法
         # (e.g. '{0} ({1})'.format(self.id,self.book.title))
+
+    @property
+    def is_overdue(self):
+        if self.due_back and date.today() > self.due_back:
+            return True
+        return False
 
 # 作者模型(Author model)
 class Author(models.Model):
