@@ -70,6 +70,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'locallibrary.wsgi.application'
 
+# Session
+# https://docs.djangoproject.com/en/2.0/topics/http/sessions/
+# 修改 session object 的子物件時， session change 並不會被儲存，必須加上 `request.session.modified = True` 才會被更新
+# 或是可以在 settings.py 加上下面這行，讓每個 request 都更新 session (是否有效能疑慮?) 。
+# SESSION_SAVE_EVERY_REQUEST = True
+
+
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
